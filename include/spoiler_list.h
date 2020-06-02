@@ -1,8 +1,6 @@
 #ifndef SPOILER_LIST_H
 #define SPOILER_LIST_H
 
-#include <stdlib.h>
-
 #include "spoiler.h"
 
 struct spoiler_list {

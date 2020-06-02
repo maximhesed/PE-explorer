@@ -1,28 +1,22 @@
 #ifndef SPOILER_H
 #define SPOILER_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <windows.h>
-
 #include "colors.h"
 #include "buffer.h"
 #include "data.h"
 
 enum SCROLL_STATE {
 	SCROLL_HIDDEN,
-	SCROLL_SHOWN	
+	SCROLL_SHOWN
 };
 
 struct spoiler {
 	char *caption;
-	char **data; /* dynamic (!) */
-	int x;
-	int y;
+	char **data;
 	
 	/* reserved */
+	int x;
+	int y;
 	int items_q;
 	int offset;
 	bool state;

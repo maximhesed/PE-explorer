@@ -8,28 +8,6 @@ sig_nt(LPVOID addr, int offset) {
 		offset);
 }
 
-void 
-assert(char *func_name) {
-	DWORD msg_id = GetLastError();
-	LPSTR msg_buf = NULL;
-	
-	FormatMessageA(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM 
-			| FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-		msg_id,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPSTR) &msg_buf,
-		0,
-		NULL);
-	
-	fprintf(flog, "%s(): %s", func_name, msg_buf);
-	
-	LocalFree(msg_buf);
-	
-	exit(EXIT_FAILURE);
-}
-
 DWORD
 sign_get(LPVOID bytes) {
 	if (*(USHORT *) bytes == IMAGE_DOS_SIGNATURE) {
@@ -46,22 +24,25 @@ sign_get(LPVOID bytes) {
 	return 0;
 }
 
-LPVOID hfile_get(LPVOID addr) {
+LPVOID
+hfile_get(LPVOID addr) {
 	return (PIMAGE_FILE_HEADER) sig_nt(addr, SIZE_OF_NT_SIGNATURE);
 }
 
-LPVOID hopt_get(LPVOID addr) {
+LPVOID
+hopt_get(LPVOID addr) {
 	return (PIMAGE_OPTIONAL_HEADER) sig_nt(addr, SIZE_OF_NT_SIGNATURE +
 		sizeof(IMAGE_FILE_HEADER));
 }
 
-LPVOID hsec_get(LPVOID addr) {
+LPVOID
+hsec_get(LPVOID addr) {
 	return (PIMAGE_SECTION_HEADER) sig_nt(addr, SIZE_OF_NT_SIGNATURE +
 		sizeof(IMAGE_FILE_HEADER) + sizeof(IMAGE_OPTIONAL_HEADER));
 }
 
 char *
-hfile_info_get(void) {
+hfile_info_get(IMAGE_FILE_HEADER *hfile) {
 	char *data = calloc(sizeof(char), 512);
 	
 	sprintf(data,
@@ -84,7 +65,7 @@ hfile_info_get(void) {
 }
 
 char *
-hopt_info_get(void) {
+hopt_info_get(IMAGE_OPTIONAL_HEADER *hopt) {
 	char *data = calloc(sizeof(char), 8192);
 
 	sprintf(data,
@@ -143,7 +124,7 @@ hopt_info_get(void) {
 }
 
 char *
-hsec_info_get(IMAGE_SECTION_HEADER *sec) {
+hsec_info_get(IMAGE_SECTION_HEADER *hsec) {
 	char *data = calloc(sizeof(char), 512);
 	
 	sprintf(data,
@@ -151,20 +132,20 @@ hsec_info_get(IMAGE_SECTION_HEADER *sec) {
 		"SizeOfRawData: %lu\n"
 		"PointerToRawData: 0x%lx\n"
 		"Characteristics: 0x%lx\n",
-		sec->VirtualAddress,
-		sec->SizeOfRawData,
-		sec->PointerToRawData,
-		sec->Characteristics);
+		hsec->VirtualAddress,
+		hsec->SizeOfRawData,
+		hsec->PointerToRawData,
+		hsec->Characteristics);
 		
 	return data;
 }
 
 int
-hsec_offset_get(const char *sname) {
+hsec_offset_get(struct pe_info *pinfo, const char *sname) {
 	int i;
 	
-	for (i = 0; i < hfile->NumberOfSections; i++) {
-		if (!strcmp((const char *) (hsec + i)->Name, sname))
+	for (i = 0; i < pinfo->hfile->NumberOfSections; i++) {
+		if (!strcmp((const char *) (pinfo->hsec + i)->Name, sname))
 			return i;
 	}
 	
@@ -172,16 +153,14 @@ hsec_offset_get(const char *sname) {
 }
 
 LPVOID
-hsec_dd_get(LPVOID bytes, const char *sname) {
-	PIMAGE_SECTION_HEADER hsec_local;
+hsec_dd_get(struct pe_info *pinfo, const char *sname) {
 	int offset;
 	
-	offset = hsec_offset_get(sname);
+	offset = hsec_offset_get(pinfo, sname);
 	if (offset == -1)
 		return NULL;
 	
-	hsec_local = hsec + offset;
-	
-	return (LPVOID) ((DWORD) bytes + hsec_local->PointerToRawData 
-		+ hopt->DataDirectory[offset].VirtualAddress);
+	return (LPVOID) ((DWORD) pinfo->bytes
+		+ (pinfo->hsec + offset)->PointerToRawData
+		+ pinfo->hopt->DataDirectory[offset].VirtualAddress);
 }

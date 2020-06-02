@@ -1,7 +1,7 @@
 #include "buffer.h"
 
 struct buffer *
-buf_alloc(const COORD wsize) {
+buf_alloc(COORD wsize) {
 	struct buffer *buf = malloc(sizeof(struct buffer));
 	
 	buf->buf = calloc(sizeof(CHAR_INFO), wsize.X * wsize.Y);
@@ -14,15 +14,14 @@ buf_alloc(const COORD wsize) {
 
 void
 buf_capture(struct buffer *buf) {
-	const COORD size = {buf->size_x, buf->size_y};
-	
+	COORD size = {buf->size_x, buf->size_y};
 	SMALL_RECT rect = {0, 0, size.X - 1, size.Y - 1};
 	
 	ReadConsoleOutput(hout, buf->buf, size, (COORD) {0, 0}, &rect);
 }
 
 void
-buf_draw(struct buffer *buf, int y_offset, int lines) {
+buf_draw(const struct buffer *buf, int y_offset, int lines) {
 	COORD size = {BUF_BAS_SIZE_X, BUF_BAS_SIZE_Y - y_offset};
 	SMALL_RECT rect = {0, 0, size.X - 1, size.Y - 1};
 	unsigned int offset;
@@ -45,7 +44,7 @@ buf_draw(struct buffer *buf, int y_offset, int lines) {
 }
 
 bool
-buf_compare(struct buffer *buf, struct buffer *buf_old) {
+buf_compare(const struct buffer *buf, const struct buffer *buf_old) {
 	int i;
 	
 	for (i = 0; i < buf->size_x * buf->size_y; i++) {
@@ -58,13 +57,12 @@ buf_compare(struct buffer *buf, struct buffer *buf_old) {
 }
 
 void
-buf_commit(struct buffer *buf, CHAR_INFO *data, int size, int x, int y) {
-	const int offset = (buf->size_x * y) + x;
-	
-	int i;
+buf_commit(struct buffer *buf, CHAR_INFO *data, size_t size, int x, int y) {
+	unsigned int i;
+	int offset = (buf->size_x * y) + x;
 	
 	for (i = 0; i < size; i++) {
-		if (i + offset >= buf->size_x * buf->size_y) {
+		if ((int) i + offset >= buf->size_x * buf->size_y) {
 			buf_commit(buf_rsv, data + i, size - i, x, y - buf->size_y);
 			
 			return;
@@ -93,32 +91,26 @@ buf_printf(int x, int y, WORD attrs, int size, const char *fmt, ...) {
 }
 
 int
-buf_measure(struct buffer *buf) {
+buf_measure(const struct buffer *buf) {
 	int i;
 	int j;
+	char c;
 	
 	for (i = buf->size_y - 1; i >= 0; i--) {
-		bool empty = true;
-		
 		for (j = 0; j < buf->size_x; j++) {
-			const char c = buf->buf[i * buf->size_x + j].Char.AsciiChar;
+			c = buf->buf[i * buf->size_x + j].Char.AsciiChar;
 			
-			if (c != 0 && c != ' ') {
-				empty = false;
-			
-				break;	
-			}
+			if (c != 0 && c != ' ')
+				goto not_empty;
 		}
-		
-		if (!empty)
-			break;
 	}
 	
+not_empty:
 	return i + 1;
 }
 
 void
-buf_copy(struct buffer *dst, struct buffer *src) {
+buf_copy(struct buffer *dst, const struct buffer *src) {
 	int i;
 	
 	for (i = 0; i < src->size_x * src->size_y; i++) {		

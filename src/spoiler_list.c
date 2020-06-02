@@ -2,8 +2,8 @@
 
 typedef struct spoiler_list node_t;
 
-static 
-node_t * node_alloc(node_t *next, node_t *prev) {
+static node_t *
+node_alloc(node_t *next, node_t *prev) {
 	node_t *node = malloc(sizeof(node_t));
 	
 	node->spl = NULL;
@@ -13,8 +13,8 @@ node_t * node_alloc(node_t *next, node_t *prev) {
 	return node;
 }
 
-struct 
-spoiler_list * spl_list_alloc(void) {
+struct spoiler_list *
+spl_list_alloc(void) {
 	struct spoiler_list *spl_list = malloc(sizeof(struct spoiler_list));
 	
 	spl_list->spl = NULL;
