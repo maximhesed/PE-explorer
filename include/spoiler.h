@@ -3,7 +3,6 @@
 
 #include "colors.h"
 #include "buffer.h"
-#include "data.h"
 
 enum SCROLL_STATE {
 	SCROLL_HIDDEN,

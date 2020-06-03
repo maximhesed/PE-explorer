@@ -1,34 +1,57 @@
 #include <stdio.h>
 #include <windows.h>
+#include <conio.h>
 
 #include "buffer.h"
 #include "pe.h"
 #include "spoiler.h"
 #include "spoiler_list.h"
 
+#define FILE_SIZE_MAX 256
+
 static void
-assert(HWND winh, const char *func_name) {
-	DWORD msg_id = GetLastError();
-	LPSTR msg_buf = NULL;
-	char title[256];
-
-	FormatMessageA(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
-			| FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-		msg_id,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPSTR) &msg_buf,
-		0,
-		NULL);
-
-	sprintf(title, "0x%lx (%s())", msg_id, func_name);
+DragInfo(void) {
+	const char *str = "Drag a PE-file there";
 	
-	MessageBox(winh, msg_buf, title, MB_OK | MB_ICONERROR);
+	COORD str_pos = {
+		BUF_BAS_SIZE_X / 2 - strlen(str) / 2, 
+		BUF_BAS_SIZE_Y / 2 - 1
+	};
+	COORD size = {BUF_BAS_SIZE_X, BUF_BAS_SIZE_Y};
+	SMALL_RECT rect = {0, 0, size.X - 1, size.Y - 1};
+	CHAR_INFO *data = malloc(sizeof(CHAR_INFO) * size.X * size.Y);
+	int i;
 	
-	LocalFree(msg_buf);
+	for (i = 0; i < size.X * size.Y; i++) {
+		data[i].Char.AsciiChar = 177;
+		data[i].Attributes = FOREGROUND_WHITE | 0;
+	}
+	
+	WriteConsoleOutput(hout, data, size, (COORD) {0, 0}, &rect);
+	
+	SetConsoleTextAttribute(hout, 0 | BACKGROUND_WHITE);
+	SetConsoleCursorPosition(hout, str_pos);
+	printf(str);
+	
+	free(data);
+}
 
-	exit(EXIT_FAILURE);
+static void
+DragRead(char fname[FILE_SIZE_MAX]) {
+	int dfnp = 0 - 1;
+	char c;
+	
+	do {
+		c = getch();
+		
+		if (c == '\"')
+			continue;
+	
+		fname[dfnp += 1] = c;
+	}
+	while (kbhit());
+	
+	fname[dfnp + 1] = '\0';
 }
 
 int main(int argc, char *argv[]) {
@@ -44,7 +67,7 @@ int main(int argc, char *argv[]) {
 	SMALL_RECT rect = {0, 0, wsize.X - 1, wsize.Y - 1};
 	HWND winh = GetConsoleWindow();
 	LONG wlong = GetWindowLong(winh, GWL_STYLE);
-	LONG flags = ~WS_MAXIMIZEBOX & ~WS_SIZEBOX & ~WS_MINIMIZEBOX;
+	LONG flags = ~WS_MINIMIZEBOX & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX;
 	FILE *file;
  	DWORD file_len;
  	char *bytes = NULL;
@@ -58,15 +81,10 @@ int main(int argc, char *argv[]) {
 	struct spoiler *spl_hopt;
 	struct spoiler_list *spl_list;
 	bool quit = false;
-	int x;
-	int y;
-	int wheel_state;
-	int wheel_pos = 0;
 	bool wheel = false;
+	int wheel_pos = 0;
 	int i;
-	
-	if (argc != 2)
-		return -1;
+	char fname[FILE_SIZE_MAX];
 	
 	flog = fopen("log.txt", "w");
 	hout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -81,26 +99,43 @@ int main(int argc, char *argv[]) {
 	SetConsoleScreenBufferSize(hout, wsize);
 	SetWindowPos(winh, HWND_NOTOPMOST, 200, 100, 0, 0, SWP_NOSIZE);
 	SetWindowLong(winh, GWL_STYLE, wlong & flags);
+	
+	buf_capture(buf_bas_old);
+	buf_copy(buf_bas, buf_bas_old);
+	
+	if (argc != 2) {
+		bool valid = false;
+		
+		do {
+			DragInfo();
+			DragRead(fname);
+			
+			if (!strstr((const char *) fname, ".exe") 
+					&& !strstr((const char *) fname, ".dll"))
+				MessageBox(winh, 
+					"Select a file with an \".exe\" or \".dll\" extension.", 
+					"Main", MB_OK | MB_ICONINFORMATION);
+			else
+				valid = true;
+		} 
+		while (!valid);
+	} else
+		strncpy(fname, argv[1], FILE_SIZE_MAX);
 
-	file = CreateFile(argv[1], GENERIC_READ, FILE_SHARE_READ, NULL, 
-		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	file = CreateFile((LPCSTR) fname, GENERIC_READ, 0, NULL, OPEN_EXISTING, 
+		FILE_ATTRIBUTE_NORMAL, NULL);
 	if (file == INVALID_HANDLE_VALUE)
 		assert(winh, "CreateFileA");
 	
 	file_len = GetFileSize(file, NULL);
 	
-	bytes = calloc(file_len, sizeof(char));
+	bytes = calloc(sizeof(char), file_len);
 	if (!ReadFile(file, bytes, file_len, &(DWORD) {0}, NULL))
 		assert(winh, "ReadFile");
 
  	hfile = hfile_get(bytes);
 	hopt = hopt_get(bytes);
 	hsec = hsec_get(bytes);
-	
-	/* --- */
-
-	buf_capture(buf_bas_old);
-	buf_copy(buf_bas, buf_bas_old);
 	
 	spl_hfile = spl_alloc("IMAGE_FILE_HEADER", hfile_info_get(hfile));
 	spl_hopt = spl_alloc("IMAGE_OPTIONAL_HEADER", hopt_info_get(hopt));
@@ -122,6 +157,9 @@ int main(int argc, char *argv[]) {
 	while (!quit) {
  		bool mouse_press_skip = false;
 		bool update = false;
+		int x;
+		int y;
+		int wheel_state;
 		
 		if (!buf_compare(buf_bas, buf_bas_old)) {
 			buf_copy(buf_bas_old, buf_bas);

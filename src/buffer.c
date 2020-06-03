@@ -74,7 +74,7 @@ buf_commit(struct buffer *buf, CHAR_INFO *data, size_t size, int x, int y) {
 }
 
 void
-buf_printf(int x, int y, WORD attrs, int size, const char *fmt, ...) {
+buf_printf(int x, int y, WORD attrs, size_t size, const char *fmt, ...) {
 	CHAR_INFO *ci_data;
 	char *data = calloc(sizeof(char), size + 1);
 	va_list ap;
