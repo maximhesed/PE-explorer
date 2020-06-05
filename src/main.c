@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <windows.h>
 #include <conio.h>
+#include <windows.h>
 
 #include "buffer.h"
 #include "pe.h"
@@ -9,9 +9,12 @@
 
 #define FILE_SIZE_MAX 256
 
+static void DragInfo(void);
+static void DragRead(char fname[FILE_SIZE_MAX]);
+
 static void
 DragInfo(void) {
-	const char *str = "Drag a PE-file there";
+	const char *str = "Drop a PE file here";
 	
 	COORD str_pos = {
 		BUF_BAS_SIZE_X / 2 - strlen(str) / 2, 
@@ -44,10 +47,8 @@ DragRead(char fname[FILE_SIZE_MAX]) {
 	do {
 		c = getch();
 		
-		if (c == '\"')
-			continue;
-	
-		fname[dfnp += 1] = c;
+		if (c != '\"')
+			fname[dfnp += 1] = c;
 	}
 	while (kbhit());
 	
@@ -106,23 +107,26 @@ int main(int argc, char *argv[]) {
 	if (argc != 2) {
 		bool valid = false;
 		
+		DragInfo();
+		
 		do {
-			DragInfo();
 			DragRead(fname);
 			
-			if (!strstr((const char *) fname, ".exe") 
-					&& !strstr((const char *) fname, ".dll"))
+			if (!strstr(fname, ".exe") && !strstr(fname, ".dll")) {
 				MessageBox(winh, 
 					"Select a file with an \".exe\" or \".dll\" extension.", 
 					"Main", MB_OK | MB_ICONINFORMATION);
-			else
-				valid = true;
+			
+				continue;
+			}
+
+			valid = true;
 		} 
 		while (!valid);
 	} else
 		strncpy(fname, argv[1], FILE_SIZE_MAX);
 
-	file = CreateFile((LPCSTR) fname, GENERIC_READ, 0, NULL, OPEN_EXISTING, 
+	file = CreateFile(fname, GENERIC_READ, 0, NULL, OPEN_EXISTING, 
 		FILE_ATTRIBUTE_NORMAL, NULL);
 	if (file == INVALID_HANDLE_VALUE)
 		assert(winh, "CreateFileA");
@@ -198,12 +202,11 @@ int main(int argc, char *argv[]) {
 			
 			switch (ev_buf.Event.MouseEvent.dwEventFlags) {	
 			case MOUSE_MOVED:
-				spl_list_emit_scroll_update(spl_list, x, y);
+				spl_list_emit_scroll(spl_list, x, y);
 				
 				mouse_press_skip = true;
 				
 				break;
-			
 			case MOUSE_WHEELED:
 				wheel_state = (int) ev_buf.Event.MouseEvent.dwButtonState;
 				if (wheel_state > 0) {
@@ -231,7 +234,6 @@ int main(int argc, char *argv[]) {
 			}
 
 			break;
-			
 		case KEY_EVENT:
 			switch (ev_buf.Event.KeyEvent.wVirtualKeyCode) {
 			case VK_F1:

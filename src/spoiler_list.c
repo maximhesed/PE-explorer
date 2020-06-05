@@ -2,6 +2,8 @@
 
 typedef struct spoiler_list node_t;
 
+static node_t * node_alloc(node_t *next, node_t *prev);
+
 static node_t *
 node_alloc(node_t *next, node_t *prev) {
 	node_t *node = malloc(sizeof(node_t));
@@ -76,7 +78,7 @@ spl_list_emit_toggle(struct spoiler_list *spl_list, int x, int y) {
 			spl_move(node->spl, -target->items_q);
 			
 		break;
-
+		
 	/* show */
 	case SCROLL_HIDDEN:
 		while ((node = node->prev)->spl != target)
@@ -89,7 +91,7 @@ spl_list_emit_toggle(struct spoiler_list *spl_list, int x, int y) {
 }
 
 void 
-spl_list_emit_scroll_update(struct spoiler_list *spl_list, int x, int y) {
+spl_list_emit_scroll(struct spoiler_list *spl_list, int x, int y) {
 	node_t *node = spl_list;
 	
 	do

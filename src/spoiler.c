@@ -33,7 +33,7 @@ spl_alloc(const char *cp, char *data) {
 }
 
 void 
-spl_draw(struct spoiler *spl) {
+spl_draw(const struct spoiler *spl) {
 	buf_printf(
 		spl->x, 
 		spl->y, 
@@ -73,7 +73,7 @@ spl_move(struct spoiler *spl, int y) {
 }
 
 void
-spl_data_show(struct spoiler *spl) {
+spl_data_show(const struct spoiler *spl) {
 	int i;
 
 	for (i = 0; i < spl->items_q; i++)
@@ -87,7 +87,7 @@ spl_data_show(struct spoiler *spl) {
 }
 
 void
-spl_data_hide(struct spoiler *spl) {
+spl_data_hide(const struct spoiler *spl) {
 	char *buf;
 	int i;
 	size_t size;
@@ -119,7 +119,6 @@ spl_data_toggle(struct spoiler *spl) {
 		spl->state = SCROLL_HIDDEN;
 		
 		break;
-		
 	case SCROLL_HIDDEN:
 		spl_data_show(spl);
 		
@@ -130,7 +129,7 @@ spl_data_toggle(struct spoiler *spl) {
 }
 
 void
-spl_scroll_update(struct spoiler *spl, int x, int y) {
+spl_scroll_update(const struct spoiler *spl, int x, int y) {
 	WORD attrs;
 	
 	if ((x >= spl->offset && x <= spl->offset + 2) && y == spl->y)

@@ -2,14 +2,16 @@
 
 static const size_t SIZE_OF_NT_SIGNATURE = sizeof(DWORD);
 
+static LPVOID sig_nt(const LPVOID addr, int offset);
+
 static LPVOID
-sig_nt(LPVOID addr, int offset) {
+sig_nt(const LPVOID addr, int offset) {
 	return (LPVOID) ((BYTE *) addr + ((PIMAGE_DOS_HEADER) addr)->e_lfanew +
 		offset);
 }
 
 DWORD
-sign_get(LPVOID bytes) {
+sign_get(const LPVOID bytes) {
 	if (*(USHORT *) bytes == IMAGE_DOS_SIGNATURE) {
 		if (LOWORD (*(DWORD *) sig_nt(bytes, 0)) == IMAGE_OS2_SIGNATURE 
 				|| LOWORD (*(DWORD *) sig_nt(bytes, 0)) 
@@ -25,24 +27,24 @@ sign_get(LPVOID bytes) {
 }
 
 LPVOID
-hfile_get(LPVOID addr) {
+hfile_get(const LPVOID addr) {
 	return (PIMAGE_FILE_HEADER) sig_nt(addr, SIZE_OF_NT_SIGNATURE);
 }
 
 LPVOID
-hopt_get(LPVOID addr) {
+hopt_get(const LPVOID addr) {
 	return (PIMAGE_OPTIONAL_HEADER) sig_nt(addr, SIZE_OF_NT_SIGNATURE +
 		sizeof(IMAGE_FILE_HEADER));
 }
 
 LPVOID
-hsec_get(LPVOID addr) {
+hsec_get(const LPVOID addr) {
 	return (PIMAGE_SECTION_HEADER) sig_nt(addr, SIZE_OF_NT_SIGNATURE +
 		sizeof(IMAGE_FILE_HEADER) + sizeof(IMAGE_OPTIONAL_HEADER));
 }
 
 char *
-hfile_info_get(IMAGE_FILE_HEADER *hfile) {
+hfile_info_get(const IMAGE_FILE_HEADER *hfile) {
 	char *data = calloc(sizeof(char), 512);
 	
 	sprintf(data,
@@ -65,7 +67,7 @@ hfile_info_get(IMAGE_FILE_HEADER *hfile) {
 }
 
 char *
-hopt_info_get(IMAGE_OPTIONAL_HEADER *hopt) {
+hopt_info_get(const IMAGE_OPTIONAL_HEADER *hopt) {
 	char *data = calloc(sizeof(char), 8192);
 
 	sprintf(data,
@@ -124,7 +126,7 @@ hopt_info_get(IMAGE_OPTIONAL_HEADER *hopt) {
 }
 
 char *
-hsec_info_get(IMAGE_SECTION_HEADER *hsec) {
+hsec_info_get(const IMAGE_SECTION_HEADER *hsec) {
 	char *data = calloc(sizeof(char), 512);
 	
 	sprintf(data,
@@ -141,7 +143,7 @@ hsec_info_get(IMAGE_SECTION_HEADER *hsec) {
 }
 
 int
-hsec_offset_get(struct pe_info *pinfo, const char *sname) {
+hsec_offset_get(const struct pe_info *pinfo, const char *sname) {
 	int i;
 	
 	for (i = 0; i < pinfo->hfile->NumberOfSections; i++) {
@@ -153,7 +155,7 @@ hsec_offset_get(struct pe_info *pinfo, const char *sname) {
 }
 
 LPVOID
-hsec_dd_get(struct pe_info *pinfo, const char *sname) {
+hsec_dd_get(const struct pe_info *pinfo, const char *sname) {
 	int offset;
 	
 	offset = hsec_offset_get(pinfo, sname);
