@@ -166,3 +166,34 @@ hsec_dd_get(const struct pe_info *pinfo, const char *sname) {
 		+ (pinfo->hsec + offset)->PointerToRawData
 		+ pinfo->hopt->DataDirectory[offset].VirtualAddress);
 }
+
+char *
+hsec_ex_dd_info_get(const IMAGE_EXPORT_DIRECTORY *edir) {
+	char *data = calloc(sizeof(char), 512);
+
+	sprintf(data,
+		"Characteristics: 0x%lx\n"
+		"TimeDateStamp: %lu\n"
+		"MajorVersion: %d\n"
+		"MinorVersion: %d\n"
+		"Name: %lu\n"
+		"Base: 0x%lx\n"
+		"NumberOfFunctions: %lu\n"
+		"NumberOfNames: %lu\n"
+		"AddressOfFunctions: 0x%lx\n"
+		"AddressOfNames: 0x%lx\n"
+		"AddressOfNameOrdinals: 0x%lx\n",
+		edir->Characteristics,
+		edir->TimeDateStamp,
+		edir->MajorVersion,
+		edir->MinorVersion,
+		edir->Name,
+		edir->Base,
+		edir->NumberOfFunctions,
+		edir->NumberOfNames,
+		edir->AddressOfFunctions,
+		edir->AddressOfNames,
+		edir->AddressOfNameOrdinals);
+
+	return data;
+}

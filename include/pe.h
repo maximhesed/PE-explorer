@@ -21,5 +21,6 @@ char * hopt_info_get(const IMAGE_OPTIONAL_HEADER *hopt);
 char * hsec_info_get(const IMAGE_SECTION_HEADER *hsec);
 int hsec_offset_get(const struct pe_info *pinfo, const char *sname);
 LPVOID hsec_dd_get(const struct pe_info *pinfo, const char *sname);
+char * hsec_ex_dd_info_get(const IMAGE_EXPORT_DIRECTORY *edir);
 
 #endif /* PE_H */

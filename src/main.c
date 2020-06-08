@@ -151,9 +151,21 @@ int main(int argc, char *argv[]) {
 	/* Append all found section headers. */
 	for (i = 0; i < hfile->NumberOfSections; i++) {
 		char cp[64];
-		
+
 		sprintf(cp, "IMAGE_SECTION_HEADER (%s)", (hsec + i)->Name);
 		spl_list_append(spl_list, spl_alloc(cp, hsec_info_get(hsec + i)));
+
+		if (!strcmp((const char *) (hsec + i)->Name, ".edata")) {
+			struct pe_info pinfo = {bytes, hfile, hopt, hsec};
+			IMAGE_EXPORT_DIRECTORY *edir;
+
+			edir = hsec_dd_get(&pinfo, ".edata");
+			if (!edir)
+				continue;
+
+			spl_list_append(spl_list, spl_alloc("IMAGE_EXPORT_DIRECTORY",
+				hsec_ex_dd_info_get(edir)));
+		}
 	}
 	
 	spl_list_draw(spl_list);
