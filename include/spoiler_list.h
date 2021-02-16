@@ -4,9 +4,9 @@
 #include "spoiler.h"
 
 struct spoiler_list {
-	struct spoiler *spl;
-	struct spoiler_list *next;
-	struct spoiler_list *prev;
+    struct spoiler *spl;
+    struct spoiler_list *next;
+    struct spoiler_list *prev;
 };
 
 struct spoiler_list * spl_list_alloc(void);

@@ -12,12 +12,12 @@
 #define BUF_RSV_PAGES 64
 
 struct buffer {
-	CHAR_INFO *buf;
-	int size_x;
-	int size_y;
-	
-	/* reserved */
-	int rsv_lines;
+    CHAR_INFO *buf;
+    int size_x;
+    int size_y;
+
+    /* reserved */
+    int rsv_lines;
 };
 
 struct buffer * buf_alloc(COORD wsize);

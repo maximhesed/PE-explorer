@@ -6,10 +6,10 @@
 #include "log.h"
 
 struct pe_info {
-	LPVOID bytes;
-	IMAGE_FILE_HEADER *hfile;
-	IMAGE_OPTIONAL_HEADER *hopt;
-	IMAGE_SECTION_HEADER *hsec;
+    LPVOID bytes;
+    IMAGE_FILE_HEADER *hfile;
+    IMAGE_OPTIONAL_HEADER *hopt;
+    IMAGE_SECTION_HEADER *hsec;
 };
 
 DWORD sign_get(const LPVOID bytes);

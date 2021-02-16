@@ -5,20 +5,20 @@
 #include "buffer.h"
 
 enum SCROLL_STATE {
-	SCROLL_HIDDEN,
-	SCROLL_SHOWN
+    SCROLL_HIDDEN,
+    SCROLL_SHOWN
 };
 
 struct spoiler {
-	char *caption;
-	char **data;
-	
-	/* reserved */
-	int x;
-	int y;
-	int items_q;
-	int offset;
-	bool state;
+    char *caption;
+    char **data;
+
+    /* reserved */
+    int x;
+    int y;
+    int items_q;
+    int offset;
+    bool state;
 };
 
 struct spoiler * spl_alloc(const char *cp, char *data);
